@@ -66,6 +66,8 @@ class TwoLayerNet(object):
     # Unpack variables from the params dictionary
     W1, b1 = self.params['W1'], self.params['b1']
     W2, b2 = self.params['W2'], self.params['b2']
+    print("X", X.shape)
+    print("W1", W1.shape)
     N, D = X.shape
     
     # Compute the forward pass
@@ -76,6 +78,8 @@ class TwoLayerNet(object):
     #############################################################################
     layer1_output = X@W1+b1
     layer1_output=np.maximum(layer1_output,0)
+    print("b1", b1.shape)
+    print("X@W1+b1", layer1_output.shape)
     scores = layer1_output@W2+b2
     #############################################################################
     #                              END OF YOUR CODE                             #
@@ -105,13 +109,22 @@ class TwoLayerNet(object):
     #############################################################################
 
     # Backward pass: compute gradients
-    grads = {}
     #############################################################################
     # TODO: Compute the backward pass, computing the derivatives of the weights #
     # and biases. Store the results in the grads dictionary. For example,       #
     # grads['W1'] should store the gradient on W1, and be a matrix of same size #
     #############################################################################
-    pass
+    dscores = probs
+    dscores[range(N),y] -= 1
+    dscores /= N
+
+    grads = {}
+    grads['b2'] = dscores
+    grads['W2'] = np.dot(layer1_output.T, dscores) + 2*reg*W2
+    grads['b1'] = np.dot(dscores, W2.T)
+    print("grads b1", grads['b1'])
+    grads['b1'][layer1_output==0] = 0
+    grads['W1'] = np.dot(X.T, np.dot(dscores, W2.T))+ 2*reg*W1
     #############################################################################
     #                              END OF YOUR CODE                             #
     #############################################################################
