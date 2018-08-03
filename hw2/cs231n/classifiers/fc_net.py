@@ -281,6 +281,7 @@ class FullyConnectedNet(object):
         # of 0.5 to simplify the expression for the gradient.                      #
         ############################################################################
         loss, dscores = softmax_loss(scores, y)
+        loss += 0.5*self.reg*np.sum(self.params['W'+str(self.num_layers)]*self.params['W'+str(self.num_layers)])
         dout, grads['W'+str(self.num_layers)], grads['b'+str(self.num_layers)] = affine_backward(dscores, lastcache)
         grads['W'+str(self.num_layers)] += self.reg*self.params['W'+str(self.num_layers)]
         for i in range(self.num_layers-1,0,-1):
