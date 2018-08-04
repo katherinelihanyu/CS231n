@@ -274,8 +274,7 @@ def batchnorm_backward_alt(dout, cache):
     # single statement; our implementation fits on a single 80-character line.#
     ###########################################################################
     N,_ = x.shape
-    dx_norm = dout * gamma
-   
+    dx_norm = dout * gamma 
     dx = (1. / N) * (1/np.sqrt(var + eps)) * (N*dx_norm - np.sum(dx_norm, axis=0) - x_norm*np.sum(dx_norm*x_norm, axis=0))
     dgamma = np.sum(dout*x_norm,axis=0)
     dbeta = np.sum(dout,axis=0)
@@ -320,7 +319,11 @@ def layernorm_forward(x, gamma, beta, ln_param):
     # transformations you could perform, that would enable you to copy over   #
     # the batch norm code and leave it almost unchanged?                      #
     ###########################################################################
-    pass
+    mean = np.mean(x.T, axis=0)
+    var = np.var(x.T,axis=0)
+    normalized = (x.T - mean)/np.sqrt(var + eps)
+    out = gamma*normalized.T + beta
+    cache = (x, normalized, mean, var, gamma, eps)
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
@@ -344,6 +347,7 @@ def layernorm_backward(dout, cache):
     - dbeta: Gradient with respect to shift parameter beta, of shape (D,)
     """
     dx, dgamma, dbeta = None, None, None
+    x, x_norm, mean, var, gamma, eps = cache
     ###########################################################################
     # TODO: Implement the backward pass for layer norm.                       #
     #                                                                         #
@@ -351,11 +355,15 @@ def layernorm_backward(dout, cache):
     # implementation of batch normalization. The hints to the forward pass    #
     # still apply!                                                            #
     ###########################################################################
-    pass
+    N,_ = x.T.shape
+    dx_norm = dout * gamma 
+    dx = (1. / N) * (1/np.sqrt(var + eps)) * (N*dx_norm.T - np.sum(dx_norm.T, axis=0) - x_norm*np.sum(dx_norm.T*x_norm, axis=0))
+    dgamma = np.sum(dout*x_norm.T,axis=0)
+    dbeta = np.sum(dout,axis=0)
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
-    return dx, dgamma, dbeta
+    return dx.T, dgamma.T, dbeta
 
 
 def dropout_forward(x, dropout_param):

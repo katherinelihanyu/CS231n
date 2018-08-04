@@ -283,6 +283,9 @@ class FullyConnectedNet(object):
         loss, dscores = softmax_loss(scores, y)
         loss += 0.5*self.reg*np.sum(self.params['W'+str(self.num_layers)]*self.params['W'+str(self.num_layers)])
         dout, grads['W'+str(self.num_layers)], grads['b'+str(self.num_layers)] = affine_backward(dscores, lastcache)
+        if self.normalization == "batchnorm":
+            grads['gamma'+str(self.num_layers)] = np.zeros(self.params['gamma'+str(self.num_layers)].shape)
+            grads['beta'+str(self.num_layers)] = np.zeros(self.params['beta'+str(self.num_layers)].shape)
         grads['W'+str(self.num_layers)] += self.reg*self.params['W'+str(self.num_layers)]
         for i in range(self.num_layers-1,0,-1):
             loss += 0.5*self.reg*np.sum(self.params['W'+str(i)]*self.params['W'+str(i)])
