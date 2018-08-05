@@ -476,12 +476,27 @@ def conv_forward_naive(x, w, b, conv_param):
       W' = 1 + (W + 2 * pad - WW) / stride
     - cache: (x, w, b, conv_param)
     """
-    out = None
     ###########################################################################
     # TODO: Implement the convolutional forward pass.                         #
     # Hint: you can use the function np.pad for padding.                      #
     ###########################################################################
-    pass
+    N, C, H, W = x.shape
+    F, C, HH, WW = w.shape
+    pad = conv_param['pad']
+    stride = conv_param['stride']
+    Ho = int(1 + (H + 2 * pad - HH) / stride)
+    Wo = int(1 + (W + 2 * pad - WW) / stride)
+    out = np.zeros((N, F, Ho, Wo))
+    xp =  np.pad(x, ((0,0),(0,0),(pad,pad),(pad,pad)), 'constant', constant_values=(0))
+    for n in range(N):
+        for f in range(F):
+            for ho in range(Ho):
+                h1 = ho*stride
+                h2 = HH + ho*stride
+                for wo in range(Wo):
+                    w1 = wo*stride
+                    w2 = WW + wo*stride
+                    out[n,f,ho,wo] = np.sum(xp[n,:,h1:h2,w1:w2]*w[f])+b[f]
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
@@ -502,11 +517,30 @@ def conv_backward_naive(dout, cache):
     - dw: Gradient with respect to w
     - db: Gradient with respect to b
     """
-    dx, dw, db = None, None, None
     ###########################################################################
     # TODO: Implement the convolutional backward pass.                        #
     ###########################################################################
-    pass
+    x, w, b, conv_param = cache
+    N, C, H, W = x.shape
+    F, C, HH, WW = w.shape
+    pad = conv_param['pad']
+    stride = conv_param['stride']
+    N, F, Ho, Wo = dout.shape
+    dx = np.zeros_like(x)
+    dw = np.zeros_like(w)
+    db = np.zeros_like(b)
+    xp =  np.pad(x, ((0,0),(0,0),(pad,pad),(pad,pad)), 'constant', constant_values=(0))
+    dxp =  np.pad(dx, ((0,0),(0,0),(pad,pad),(pad,pad)), 'constant', constant_values=(0))
+    for n in range(N):
+        for f in range(F):
+            for ho in range(Ho):
+                for wo in range(Wo):
+                    db[f] += dout[n,f,ho,wo]
+                    for hh in range(HH):
+                        for ww in range(WW):
+                            dxp[n,:,ho*stride+hh, wo*stride+ww] += w[f,:, hh,ww]*dout[n,f,ho,wo]
+                            dw[f,:,hh,ww] += xp[n,:,ho*stride+hh, wo*stride+ww]*dout[n,f,ho,wo]
+    dx=dxp[:,:,pad:-pad,pad:-pad]                
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
