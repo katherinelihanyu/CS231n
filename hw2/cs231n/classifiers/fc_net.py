@@ -188,7 +188,6 @@ class FullyConnectedNet(object):
             if self.normalization == "batchnorm":
                 self.params['gamma'+l] = np.ones(hidden_size)
                 self.params['beta'+l] = np.zeros(hidden_size)
-        
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################
@@ -250,13 +249,16 @@ class FullyConnectedNet(object):
         caches = {}
         for i in range(self.num_layers-1):
             l = str(i+1)
+            cached = None
             if i == 0:
                 out=X
             if self.normalization == "batchnorm":
                 out, cache = affine_bn_relu_forward(out,self.params['W'+l], self.params['b'+l], self.params['gamma'+l],self.params['beta'+l],self.bn_params[i])
             else:
                 out, cache = affine_relu_forward(out,self.params['W'+l], self.params['b'+l])
-            caches[i+1] = cache
+            if self.use_dropout:
+                out, cached = dropout_forward(out, self.dropout_param)
+            caches[i+1] = (cache, cached)
         scores,lastcache = affine_forward(out, self.params['W'+str(self.num_layers)], self.params['b'+str(self.num_layers)])
         ############################################################################
         #                             END OF YOUR CODE                             #
@@ -289,10 +291,12 @@ class FullyConnectedNet(object):
         grads['W'+str(self.num_layers)] += self.reg*self.params['W'+str(self.num_layers)]
         for i in range(self.num_layers-1,0,-1):
             loss += 0.5*self.reg*np.sum(self.params['W'+str(i)]*self.params['W'+str(i)])
+            if self.use_dropout:
+                dout = dropout_backward(dout, caches[i][1])
             if self.normalization == "batchnorm":
-                dout, grads['W'+str(i)], grads['b'+str(i)], grads['gamma'+str(i)], grads['beta'+str(i)] = affine_bn_relu_backward(dout, caches[i])
+                dout, grads['W'+str(i)], grads['b'+str(i)], grads['gamma'+str(i)], grads['beta'+str(i)] = affine_bn_relu_backward(dout, caches[i][0])
             else:
-                dout, grads['W'+str(i)], grads['b'+str(i)] = affine_relu_backward(dout, caches[i])
+                dout, grads['W'+str(i)], grads['b'+str(i)] = affine_relu_backward(dout, caches[i][0])
             grads['W'+str(i)] += self.reg*self.params['W'+str(i)]
         ############################################################################
         #                             END OF YOUR CODE                             #
